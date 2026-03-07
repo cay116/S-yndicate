@@ -421,10 +421,10 @@ let state = {
 
 let globalData = {
     players: {
-        'CAY': { balance: STARTING_BALANCE, pin: null, pinSet: false },
-        'BROOK': { balance: STARTING_BALANCE, pin: null, pinSet: false },
-        'YONNY': { balance: STARTING_BALANCE, pin: null, pinSet: false },
-        'DRLEEROY': { balance: STARTING_BALANCE, pin: null, pinSet: false },
+        'CAY': { balance: STARTING_BALANCE, pin: null, pinSet: false, monopolyBalance: 0 },
+        'BROOK': { balance: STARTING_BALANCE, pin: null, pinSet: false, monopolyBalance: 0 },
+        'YONNY': { balance: STARTING_BALANCE, pin: null, pinSet: false, monopolyBalance: 0 },
+        'DRLEEROY': { balance: STARTING_BALANCE, pin: null, pinSet: false, monopolyBalance: 0 },
         'BANK': { balance: 999999999999, pin: null, pinSet: false, isBank: true },
         'CASINO': { balance: 999999999999, pin: null, pinSet: false, isBank: true }
     },
@@ -1840,18 +1840,18 @@ function monopolyRoll(player, pin) {
 function renderMonopoly() {
     const data = initData();
     const player = state.currentPlayer;
-    const bankBalance = data.players['BANK'] ? data.players['BANK'].balance : 999999999999;
+    const monopolyBalance = data.players[player].monopolyBalance || 0;
     
     return `
         <div class="min-h-screen pb-32 p-6">
             <div class="max-w-4xl mx-auto">
                 <h1 class="text-4xl font-bold text-yellow-400 mb-8">🎲 Monopoly Bank</h1>
                 
-                <div class="glass-card p-6 mb-6 bg-gradient-to-br from-green-900/30 to-emerald-900/30 border-green-500/30">
+                <div class="glass-card p-6 mb-6 bg-gradient-to-br from-yellow-900/30 to-orange-900/30 border-yellow-500/30">
                     <div class="text-center">
-                        <p class="text-gray-400 text-sm mb-2">🏦 Bank Balance</p>
-                        <h2 class="text-4xl font-bold text-green-400">${formatMoney(bankBalance)}</h2>
-                        <p class="text-xs text-gray-500 mt-2">Unlimited funds for Monopoly</p>
+                        <p class="text-gray-400 text-sm mb-2">💰 Your Monopoly Money</p>
+                        <h2 class="text-5xl font-bold text-yellow-400">${formatMoney(monopolyBalance)}</h2>
+                        <p class="text-xs text-gray-500 mt-2">Separate from main balance - only for Monopoly</p>
                     </div>
                 </div>
                 
@@ -1976,13 +1976,21 @@ function executeMonopolyPayment() {
         
         const data = initData();
         
-        if (amount > data.players[state.currentPlayer].balance) {
-            alert('Insufficient funds!');
+        // Ensure monopolyBalance exists
+        if (!data.players[state.currentPlayer].monopolyBalance) {
+            data.players[state.currentPlayer].monopolyBalance = 0;
+        }
+        if (!data.players[recipient].monopolyBalance) {
+            data.players[recipient].monopolyBalance = 0;
+        }
+        
+        if (amount > data.players[state.currentPlayer].monopolyBalance) {
+            alert('Insufficient Monopoly funds! You have: $' + data.players[state.currentPlayer].monopolyBalance);
             return;
         }
         
-        data.players[state.currentPlayer].balance -= amount;
-        data.players[recipient].balance += amount;
+        data.players[state.currentPlayer].monopolyBalance -= amount;
+        data.players[recipient].monopolyBalance += amount;
         
         if (!data.transactions) data.transactions = [];
         data.transactions.push({
@@ -1995,7 +2003,7 @@ function executeMonopolyPayment() {
         });
         
         saveData(data);
-        alert(`✓ Paid $${amount} to ${recipient}`);
+        alert(`✓ Paid $${amount} Monopoly money to ${recipient}`);
         
         setTimeout(() => {
             state.currentView = 'monopoly';
@@ -2007,14 +2015,13 @@ function executeMonopolyPayment() {
 function collectFromBank(amount) {
     const data = initData();
     
-    // Ensure bank exists
-    if (!data.players['BANK']) {
-        data.players['BANK'] = { balance: 999999999999, pin: null, pinSet: false, isBank: true };
+    // Ensure monopolyBalance exists
+    if (!data.players[state.currentPlayer].monopolyBalance) {
+        data.players[state.currentPlayer].monopolyBalance = 0;
     }
     
-    // Transfer from bank to player
-    data.players['BANK'].balance -= amount;
-    data.players[state.currentPlayer].balance += amount;
+    // Add to Monopoly balance (not main balance)
+    data.players[state.currentPlayer].monopolyBalance += amount;
     
     if (!data.transactions) data.transactions = [];
     data.transactions.push({
@@ -2027,7 +2034,7 @@ function collectFromBank(amount) {
     });
     
     saveData(data);
-    alert(`✓ Collected $${amount} from bank!`);
+    alert(`✓ Collected $${amount} Monopoly money from bank!`);
     render();
 }
 
@@ -2041,7 +2048,7 @@ function collectCustomFromBank() {
 }
 
 function startMonopolyGame() {
-    const pin = prompt('Enter your PIN to start Monopoly game (gives everyone $2000):');
+    const pin = prompt('Enter your PIN to start Monopoly game (gives everyone $2000 Monopoly money):');
     if (!pin) return;
     
     verifyPIN(state.currentPlayer, pin, (success) => {
@@ -2049,29 +2056,16 @@ function startMonopolyGame() {
         
         const data = initData();
         
-        // Ensure bank exists
-        if (!data.players['BANK']) {
-            data.players['BANK'] = { balance: 999999999999, pin: null, pinSet: false, isBank: true };
-        }
-        
-        // Give each player $2000 from the bank
+        // Give each player $2000 Monopoly money (separate from main balance)
         PLAYERS.forEach(player => {
-            data.players['BANK'].balance -= 2000;
-            data.players[player].balance += 2000;
-            
-            if (!data.transactions) data.transactions = [];
-            data.transactions.push({
-                from: 'BANK',
-                to: player,
-                amount: 2000,
-                timestamp: Date.now(),
-                type: 'monopoly',
-                details: 'Monopoly Game Startup Money'
-            });
+            if (!data.players[player].monopolyBalance) {
+                data.players[player].monopolyBalance = 0;
+            }
+            data.players[player].monopolyBalance += 2000;
         });
         
         saveData(data);
-        alert('✓ Monopoly game started!\n\nEach player received $2,000 startup money from the bank.');
+        alert('✓ Monopoly game started!\n\nEach player received $2,000 Monopoly money.\n\nThis is separate from your main balance and can only be used in Monopoly.');
         render();
     });
 }
@@ -2085,19 +2079,18 @@ function payToBank(amount) {
         
         const data = initData();
         
-        if (amount > data.players[state.currentPlayer].balance) {
-            alert('Insufficient funds!');
+        // Ensure monopolyBalance exists
+        if (!data.players[state.currentPlayer].monopolyBalance) {
+            data.players[state.currentPlayer].monopolyBalance = 0;
+        }
+        
+        if (amount > data.players[state.currentPlayer].monopolyBalance) {
+            alert('Insufficient Monopoly funds! You have: $' + data.players[state.currentPlayer].monopolyBalance);
             return;
         }
         
-        // Ensure bank exists
-        if (!data.players['BANK']) {
-            data.players['BANK'] = { balance: 999999999999, pin: null, pinSet: false, isBank: true };
-        }
-        
-        // Transfer from player to bank
-        data.players[state.currentPlayer].balance -= amount;
-        data.players['BANK'].balance += amount;
+        // Deduct from Monopoly balance (not main balance)
+        data.players[state.currentPlayer].monopolyBalance -= amount;
         
         if (!data.transactions) data.transactions = [];
         data.transactions.push({
@@ -2110,7 +2103,7 @@ function payToBank(amount) {
         });
         
         saveData(data);
-        alert(`✓ Paid $${amount} to bank!`);
+        alert(`✓ Paid $${amount} Monopoly money to bank!`);
         render();
     });
 }
