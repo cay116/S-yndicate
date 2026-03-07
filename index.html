@@ -429,6 +429,7 @@ let globalData = {
         'CASINO': { balance: 999999999999, pin: null, pinSet: false, isBank: true }
     },
     transactions: [],
+    monopolyTransactions: [],
     stocks: { 'CAY': [], 'BROOK': [], 'YONNY': [], 'DRLEEROY': [] },
     bets: [],
     properties: { 'CAY': [], 'BROOK': [], 'YONNY': [], 'DRLEEROY': [] },
@@ -454,6 +455,9 @@ function initData() {
     }
     if (!globalData.transactions) {
         globalData.transactions = [];
+    }
+    if (!globalData.monopolyTransactions) {
+        globalData.monopolyTransactions = [];
     }
     if (!globalData.bets) {
         globalData.bets = [];
@@ -1952,6 +1956,49 @@ function renderMonopoly() {
                         Pay Custom Amount
                     </button>
                 </div>
+                
+                <div class="glass-card p-8 mt-6">
+                    <h3 class="text-2xl font-bold text-yellow-400 mb-4">📜 Monopoly Transaction History</h3>
+                    <p class="text-gray-400 mb-4 text-center">All Monopoly transactions (separate from main history)</p>
+                    ${(() => {
+                        const monopolyTransactions = (data.monopolyTransactions || [])
+                            .sort((a, b) => b.timestamp - a.timestamp);
+                        
+                        if (monopolyTransactions.length === 0) {
+                            return '<div class="text-center text-gray-500 py-8">No Monopoly transactions yet</div>';
+                        }
+                        
+                        return monopolyTransactions.map(t => {
+                            const date = new Date(t.timestamp).toLocaleString();
+                            const isYourTransaction = t.from === player || t.to === player;
+                            const isReceived = t.to === player;
+                            const isSent = t.from === player;
+                            
+                            return `
+                                <div class="glass-card p-4 mb-3 ${isYourTransaction ? 'border-yellow-500/50' : ''}">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <span class="text-2xl">${t.from === 'BANK' ? '🏦' : getAvatar(t.from)}</span>
+                                                <span class="text-lg font-bold ${isSent ? 'text-yellow-400' : 'text-white'}">${t.from}</span>
+                                                <span class="text-gray-500">→</span>
+                                                <span class="text-2xl">${t.to === 'BANK' ? '🏦' : getAvatar(t.to)}</span>
+                                                <span class="text-lg font-bold ${isReceived ? 'text-yellow-400' : 'text-white'}">${t.to}</span>
+                                            </div>
+                                            <p class="text-xl font-bold ${isReceived ? 'text-green-400' : isSent ? 'text-red-400' : 'text-gray-300'}">
+                                                ${isReceived ? '+' : isSent ? '-' : ''}$${t.amount}
+                                            </p>
+                                            ${t.details ? `<p class="text-sm text-gray-400 mt-1">${t.details}</p>` : ''}
+                                        </div>
+                                        <div class="text-right ml-4">
+                                            <span class="text-xs text-gray-500">${date}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    })()}
+                </div>
             </div>
         </div>
         ${renderBottomNav('monopoly')}
@@ -1995,13 +2042,12 @@ function executeMonopolyPayment() {
         data.players[state.currentPlayer].monopolyBalance -= amount;
         data.players[recipient].monopolyBalance += amount;
         
-        if (!data.transactions) data.transactions = [];
-        data.transactions.push({
+        if (!data.monopolyTransactions) data.monopolyTransactions = [];
+        data.monopolyTransactions.push({
             from: state.currentPlayer,
             to: recipient,
             amount: amount,
             timestamp: Date.now(),
-            type: 'monopoly',
             details: reason
         });
         
@@ -2026,13 +2072,12 @@ function collectFromBank(amount) {
     // Add to Monopoly balance (not main balance)
     data.players[state.currentPlayer].monopolyBalance += amount;
     
-    if (!data.transactions) data.transactions = [];
-    data.transactions.push({
+    if (!data.monopolyTransactions) data.monopolyTransactions = [];
+    data.monopolyTransactions.push({
         from: 'BANK',
         to: state.currentPlayer,
         amount: amount,
         timestamp: Date.now(),
-        type: 'monopoly',
         details: 'Collected from Monopoly bank'
     });
     
@@ -2051,7 +2096,7 @@ function collectCustomFromBank() {
 }
 
 function startMonopolyGame() {
-    const pin = prompt('Enter your PIN to start Monopoly game (gives everyone $2000):');
+    const pin = prompt('Enter your PIN to start Monopoly game (gives everyone $2000 Monopoly money):');
     if (!pin) return;
     
     verifyPIN(state.currentPlayer, pin, (success) => {
@@ -2059,29 +2104,25 @@ function startMonopolyGame() {
         
         const data = initData();
         
-        // Ensure bank exists
-        if (!data.players['BANK']) {
-            data.players['BANK'] = { balance: 999999999999, pin: null, pinSet: false, isBank: true };
-        }
-        
-        // Give each player $2000 to their MAIN balance from the bank
+        // Give each player $2000 Monopoly money (NOT main balance)
         PLAYERS.forEach(player => {
-            data.players['BANK'].balance -= 2000;
-            data.players[player].balance += 2000;
+            if (!data.players[player].monopolyBalance) {
+                data.players[player].monopolyBalance = 0;
+            }
+            data.players[player].monopolyBalance += 2000;
             
-            if (!data.transactions) data.transactions = [];
-            data.transactions.push({
+            if (!data.monopolyTransactions) data.monopolyTransactions = [];
+            data.monopolyTransactions.push({
                 from: 'BANK',
                 to: player,
                 amount: 2000,
                 timestamp: Date.now(),
-                type: 'monopoly',
                 details: 'Monopoly Game Startup Money'
             });
         });
         
         saveData(data);
-        alert('✓ Monopoly game started!\n\nEach player received $2,000 in their main balance.');
+        alert('✓ Monopoly game started!\n\nEach player received $2,000 Monopoly money.\n\n(This is separate from your main balance)');
         render();
     });
 }
@@ -2128,13 +2169,12 @@ function payToBank(amount) {
         // Deduct from Monopoly balance (not main balance)
         data.players[state.currentPlayer].monopolyBalance -= amount;
         
-        if (!data.transactions) data.transactions = [];
-        data.transactions.push({
+        if (!data.monopolyTransactions) data.monopolyTransactions = [];
+        data.monopolyTransactions.push({
             from: state.currentPlayer,
             to: 'BANK',
             amount: amount,
             timestamp: Date.now(),
-            type: 'monopoly',
             details: 'Paid to Monopoly bank'
         });
         
