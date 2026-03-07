@@ -1855,6 +1855,14 @@ function renderMonopoly() {
                     </div>
                 </div>
                 
+                <div class="glass-card p-6 mb-6 bg-gradient-to-br from-blue-900/30 to-purple-900/30 border-blue-500/30">
+                    <h3 class="text-2xl font-bold text-yellow-400 mb-4 text-center">🎮 Start New Game</h3>
+                    <p class="text-gray-400 mb-4 text-center">Give each player $2,000 startup money</p>
+                    <button onclick="startMonopolyGame()" class="gold-btn w-full py-6 rounded-2xl text-2xl">
+                        🎲 Start Monopoly Game ($2,000 each)
+                    </button>
+                </div>
+                
                 <div class="glass-card p-8 mb-6">
                     <h3 class="text-2xl font-bold text-yellow-400 mb-4">💸 Pay Another Player</h3>
                     <p class="text-gray-400 mb-4">For rent, property purchases, or any game payment</p>
@@ -2030,6 +2038,42 @@ function collectCustomFromBank() {
         return;
     }
     collectFromBank(amount);
+}
+
+function startMonopolyGame() {
+    const pin = prompt('Enter your PIN to start Monopoly game (gives everyone $2000):');
+    if (!pin) return;
+    
+    verifyPIN(state.currentPlayer, pin, (success) => {
+        if (!success) return;
+        
+        const data = initData();
+        
+        // Ensure bank exists
+        if (!data.players['BANK']) {
+            data.players['BANK'] = { balance: 999999999999, pin: null, pinSet: false, isBank: true };
+        }
+        
+        // Give each player $2000 from the bank
+        PLAYERS.forEach(player => {
+            data.players['BANK'].balance -= 2000;
+            data.players[player].balance += 2000;
+            
+            if (!data.transactions) data.transactions = [];
+            data.transactions.push({
+                from: 'BANK',
+                to: player,
+                amount: 2000,
+                timestamp: Date.now(),
+                type: 'monopoly',
+                details: 'Monopoly Game Startup Money'
+            });
+        });
+        
+        saveData(data);
+        alert('✓ Monopoly game started!\n\nEach player received $2,000 startup money from the bank.');
+        render();
+    });
 }
 
 function payToBank(amount) {
