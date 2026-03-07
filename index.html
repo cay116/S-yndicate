@@ -1858,8 +1858,11 @@ function renderMonopoly() {
                 <div class="glass-card p-6 mb-6 bg-gradient-to-br from-blue-900/30 to-purple-900/30 border-blue-500/30">
                     <h3 class="text-2xl font-bold text-yellow-400 mb-4 text-center">🎮 Start New Game</h3>
                     <p class="text-gray-400 mb-4 text-center">Give each player $2,000 startup money</p>
-                    <button onclick="startMonopolyGame()" class="gold-btn w-full py-6 rounded-2xl text-2xl">
+                    <button onclick="startMonopolyGame()" class="gold-btn w-full py-6 rounded-2xl text-2xl mb-3">
                         🎲 Start Monopoly Game ($2,000 each)
+                    </button>
+                    <button onclick="resetMonopolyBalances()" class="w-full bg-red-600 hover:bg-red-500 py-4 rounded-2xl text-xl font-bold">
+                        🔄 Reset All Monopoly Balances to $0
                     </button>
                 </div>
                 
@@ -2079,6 +2082,26 @@ function startMonopolyGame() {
         
         saveData(data);
         alert('✓ Monopoly game started!\n\nEach player received $2,000 in their main balance.');
+        render();
+    });
+}
+
+function resetMonopolyBalances() {
+    const pin = prompt('Enter your PIN to reset all Monopoly balances to $0:');
+    if (!pin) return;
+    
+    verifyPIN(state.currentPlayer, pin, (success) => {
+        if (!success) return;
+        
+        const data = initData();
+        
+        // Reset all Monopoly balances to 0
+        PLAYERS.forEach(player => {
+            data.players[player].monopolyBalance = 0;
+        });
+        
+        saveData(data);
+        alert('✓ All Monopoly balances have been reset to $0!');
         render();
     });
 }
