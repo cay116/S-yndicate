@@ -2271,24 +2271,7 @@ function playCasinoGame(game, betAmount, pin) {
         let won = false;
         let winAmount = 0;
         
-        // HAPPY HOUR MODE - Players always win!
-        if (state.happyHour) {
-            won = true;
-            if (game === 'slots') {
-                winAmount = betAmount * 10;
-                result = `7️⃣ 7️⃣ 7️⃣\n🎰 HAPPY HOUR JACKPOT! Won $${winAmount}!`;
-            } else if (game === 'roulette') {
-                winAmount = betAmount * 35;
-                result = `🎯 Lucky Number!\n🍀 HAPPY HOUR WIN! Won $${winAmount}!`;
-            } else if (game === 'dice') {
-                winAmount = betAmount * 2;
-                result = `🎲 Rolled 7-11!\n🍀 HAPPY HOUR WIN! Won $${winAmount}!`;
-            } else if (game === 'coinflip') {
-                winAmount = betAmount * 2;
-                result = `🪙 Perfect Flip!\n🍀 HAPPY HOUR WIN! Won $${winAmount}!`;
-            }
-        } else {
-            // Normal casino logic
+        // Casino games with normal odds
         
         if (game === 'slots') {
             const symbols = ['🍒', '🍋', '🍊', '🍇', '💎', '7️⃣'];
@@ -2361,7 +2344,6 @@ function playCasinoGame(game, betAmount, pin) {
                 result = `🪙 ${flip.toUpperCase()}!\n😢 Lost $${betAmount}`;
             }
         }
-
         
         // Process transaction
         if (won) {
@@ -2491,6 +2473,31 @@ function playCasinoPrompt(game) {
     }
     const pin = prompt('Enter your PIN to play:');
     if (pin) playCasinoGame(game, betAmount, pin);
+}
+
+function toggleHappyHour() {
+    // Only CAY can toggle Happy Hour
+    if (state.currentPlayer !== 'CAY') {
+        alert('🚫 Access Denied!\n\nOnly CAY can control Happy Hour.');
+        return;
+    }
+    
+    state.happyHour = !state.happyHour;
+    const status = state.happyHour ? 'ACTIVATED' : 'DEACTIVATED';
+    const emoji = state.happyHour ? '🍀' : '😈';
+    
+    // Send notification to all players
+    sendNotificationToAll({
+        title: `${emoji} Casino Happy Hour ${status}!`,
+        message: state.happyHour ? 
+            'All casino games now guarantee wins! Head to the casino for easy money!' : 
+            'Happy Hour has ended. Casino is back to normal odds.',
+        type: state.happyHour ? 'success' : 'warning',
+        timestamp: Date.now()
+    });
+    
+    alert(`${emoji} Happy Hour ${status}!\n\n${state.happyHour ? 'Players will now always win!' : 'Back to normal casino odds.'}\n\n📢 Notification sent to all players!`);
+    render();
 }
 
 function sendNotificationToAll(notification) {
