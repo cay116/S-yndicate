@@ -416,8 +416,7 @@ let state = {
     currentView: 'profile-select',
     currentTab: 'dashboard',
     marketTab: 'portfolio',
-    scannerActive: false,
-    happyHour: true
+    scannerActive: false
 };
 
 let globalData = {
@@ -2362,7 +2361,7 @@ function playCasinoGame(game, betAmount, pin) {
                 result = `🪙 ${flip.toUpperCase()}!\n😢 Lost $${betAmount}`;
             }
         }
-        } // End of normal casino logic (else block)
+
         
         // Process transaction
         if (won) {
@@ -2412,24 +2411,6 @@ function renderCasino() {
                         <p class="text-gray-400 text-sm mb-2">🏦 Casino Bank</p>
                         <h2 class="text-4xl font-bold text-purple-400">${formatMoney(casinoBalance)}</h2>
                         <p class="text-xs text-gray-500 mt-2">House always has funds</p>
-                    </div>
-                </div>
-                
-                <div class="glass-card p-6 mb-6 ${state.happyHour ? 'bg-gradient-to-br from-green-900/30 to-yellow-900/30 border-green-500/30' : 'bg-gradient-to-br from-red-900/30 to-orange-900/30 border-red-500/30'}">
-                    <div class="text-center">
-                        <h3 class="text-2xl font-bold ${state.happyHour ? 'text-green-400' : 'text-red-400'} mb-4">
-                            ${state.happyHour ? '🍀 HAPPY HOUR ACTIVE!' : '😈 Normal Casino Mode'}
-                        </h3>
-                        <p class="text-gray-400 mb-4">
-                            ${state.happyHour ? 'Players always win during Happy Hour!' : 'Standard casino odds - house edge applies'}
-                        </p>
-                        ${player === 'CAY' ? `
-                            <button onclick="toggleHappyHour()" class="${state.happyHour ? 'bg-red-600 hover:bg-red-500' : 'bg-green-600 hover:bg-green-500'} w-full py-4 rounded-xl text-xl font-bold">
-                                ${state.happyHour ? '🔴 End Happy Hour' : '🍀 Start Happy Hour'}
-                            </button>
-                        ` : `
-                            <p class="text-sm text-gray-500 italic">Only CAY can control Happy Hour</p>
-                        `}
                     </div>
                 </div>
                 
@@ -2510,31 +2491,6 @@ function playCasinoPrompt(game) {
     }
     const pin = prompt('Enter your PIN to play:');
     if (pin) playCasinoGame(game, betAmount, pin);
-}
-
-function toggleHappyHour() {
-    // Only CAY can toggle Happy Hour
-    if (state.currentPlayer !== 'CAY') {
-        alert('🚫 Access Denied!\n\nOnly CAY can control Happy Hour.');
-        return;
-    }
-    
-    state.happyHour = !state.happyHour;
-    const status = state.happyHour ? 'ACTIVATED' : 'DEACTIVATED';
-    const emoji = state.happyHour ? '🍀' : '😈';
-    
-    // Send notification to all players
-    sendNotificationToAll({
-        title: `${emoji} Casino Happy Hour ${status}!`,
-        message: state.happyHour ? 
-            'All casino games now guarantee wins! Head to the casino for easy money!' : 
-            'Happy Hour has ended. Casino is back to normal odds.',
-        type: state.happyHour ? 'success' : 'warning',
-        timestamp: Date.now()
-    });
-    
-    alert(`${emoji} Happy Hour ${status}!\n\n${state.happyHour ? 'Players will now always win!' : 'Back to normal casino odds.'}\n\n📢 Notification sent to all players!`);
-    render();
 }
 
 function sendNotificationToAll(notification) {
