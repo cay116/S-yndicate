@@ -416,7 +416,8 @@ let state = {
     currentView: 'profile-select',
     currentTab: 'dashboard',
     marketTab: 'portfolio',
-    scannerActive: false
+    scannerActive: false,
+    happyHour: true
 };
 
 let globalData = {
@@ -430,6 +431,7 @@ let globalData = {
     },
     transactions: [],
     monopolyTransactions: [],
+    notifications: [],
     stocks: { 'CAY': [], 'BROOK': [], 'YONNY': [], 'DRLEEROY': [] },
     bets: [],
     properties: { 'CAY': [], 'BROOK': [], 'YONNY': [], 'DRLEEROY': [] },
@@ -458,6 +460,9 @@ function initData() {
     }
     if (!globalData.monopolyTransactions) {
         globalData.monopolyTransactions = [];
+    }
+    if (!globalData.notifications) {
+        globalData.notifications = [];
     }
     if (!globalData.bets) {
         globalData.bets = [];
@@ -577,6 +582,16 @@ function sendMoney(from, to, amount, pin) {
             timestamp: Date.now(),
             type: 'transfer'
         });
+        
+        // Send notification for large transfers (over $1M)
+        if (amt >= 1000000) {
+            sendNotificationToAll({
+                title: '💰 Large Transfer Alert!',
+                message: `${from} sent ${formatMoney(amt)} to ${to}!`,
+                type: 'info',
+                timestamp: Date.now()
+            });
+        }
         
         saveData(data);
         alert(`✓ Sent ${formatMoney(amt)} to ${to}`);
@@ -726,6 +741,41 @@ function renderDashboard() {
                     <div id="qr-code" class="flex justify-center bg-slate-900 p-6 rounded-2xl"></div>
                     <p class="text-center text-gray-400 mt-4">Others can scan to send you money</p>
                 </div>
+                
+                ${(() => {
+                    const notifications = (data.notifications || [])
+                        .sort((a, b) => b.timestamp - a.timestamp)
+                        .slice(0, 3); // Show only last 3 notifications
+                    
+                    if (notifications.length === 0) return '';
+                    
+                    return `
+                        <div class="glass-card p-8 mt-6 fade-in">
+                            <h3 class="text-2xl font-bold text-yellow-400 mb-4">📢 Recent Notifications</h3>
+                            ${notifications.map(notif => {
+                                const date = new Date(notif.timestamp).toLocaleString();
+                                const bgColor = notif.type === 'success' ? 'bg-green-900/20 border-green-500/30' : 
+                                               notif.type === 'warning' ? 'bg-yellow-900/20 border-yellow-500/30' : 
+                                               'bg-blue-900/20 border-blue-500/30';
+                                const textColor = notif.type === 'success' ? 'text-green-400' : 
+                                                 notif.type === 'warning' ? 'text-yellow-400' : 
+                                                 'text-blue-400';
+                                
+                                return `
+                                    <div class="glass-card p-4 mb-3 ${bgColor}">
+                                        <div class="flex justify-between items-start">
+                                            <div class="flex-1">
+                                                <h4 class="font-bold ${textColor} mb-1">${notif.title}</h4>
+                                                <p class="text-gray-300 text-sm">${notif.message}</p>
+                                            </div>
+                                            <span class="text-xs text-gray-500 ml-4">${date}</span>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                })()}
             </div>
         </div>
         ${renderBottomNav('dashboard')}
@@ -2121,8 +2171,16 @@ function startMonopolyGame() {
             });
         });
         
+        // Send notification to all players
+        sendNotificationToAll({
+            title: '🎲 Monopoly Game Started!',
+            message: `${state.currentPlayer} started a new Monopoly game. Everyone received $2,000 Monopoly money!`,
+            type: 'success',
+            timestamp: Date.now()
+        });
+        
         saveData(data);
-        alert('✓ Monopoly game started!\n\nEach player received $2,000 Monopoly money.\n\n(This is separate from your main balance)');
+        alert('✓ Monopoly game started!\n\nEach player received $2,000 Monopoly money.\n\n(This is separate from your main balance)\n\n📢 Notification sent to all players!');
         render();
     });
 }
@@ -2214,6 +2272,25 @@ function playCasinoGame(game, betAmount, pin) {
         let won = false;
         let winAmount = 0;
         
+        // HAPPY HOUR MODE - Players always win!
+        if (state.happyHour) {
+            won = true;
+            if (game === 'slots') {
+                winAmount = betAmount * 10;
+                result = `7️⃣ 7️⃣ 7️⃣\n🎰 HAPPY HOUR JACKPOT! Won $${winAmount}!`;
+            } else if (game === 'roulette') {
+                winAmount = betAmount * 35;
+                result = `🎯 Lucky Number!\n🍀 HAPPY HOUR WIN! Won $${winAmount}!`;
+            } else if (game === 'dice') {
+                winAmount = betAmount * 2;
+                result = `🎲 Rolled 7-11!\n🍀 HAPPY HOUR WIN! Won $${winAmount}!`;
+            } else if (game === 'coinflip') {
+                winAmount = betAmount * 2;
+                result = `🪙 Perfect Flip!\n🍀 HAPPY HOUR WIN! Won $${winAmount}!`;
+            }
+        } else {
+            // Normal casino logic
+        
         if (game === 'slots') {
             const symbols = ['🍒', '🍋', '🍊', '🍇', '💎', '7️⃣'];
             const reel1 = symbols[Math.floor(Math.random() * symbols.length)];
@@ -2285,6 +2362,7 @@ function playCasinoGame(game, betAmount, pin) {
                 result = `🪙 ${flip.toUpperCase()}!\n😢 Lost $${betAmount}`;
             }
         }
+        } // End of normal casino logic (else block)
         
         // Process transaction
         if (won) {
@@ -2334,6 +2412,24 @@ function renderCasino() {
                         <p class="text-gray-400 text-sm mb-2">🏦 Casino Bank</p>
                         <h2 class="text-4xl font-bold text-purple-400">${formatMoney(casinoBalance)}</h2>
                         <p class="text-xs text-gray-500 mt-2">House always has funds</p>
+                    </div>
+                </div>
+                
+                <div class="glass-card p-6 mb-6 ${state.happyHour ? 'bg-gradient-to-br from-green-900/30 to-yellow-900/30 border-green-500/30' : 'bg-gradient-to-br from-red-900/30 to-orange-900/30 border-red-500/30'}">
+                    <div class="text-center">
+                        <h3 class="text-2xl font-bold ${state.happyHour ? 'text-green-400' : 'text-red-400'} mb-4">
+                            ${state.happyHour ? '🍀 HAPPY HOUR ACTIVE!' : '😈 Normal Casino Mode'}
+                        </h3>
+                        <p class="text-gray-400 mb-4">
+                            ${state.happyHour ? 'Players always win during Happy Hour!' : 'Standard casino odds - house edge applies'}
+                        </p>
+                        ${player === 'CAY' ? `
+                            <button onclick="toggleHappyHour()" class="${state.happyHour ? 'bg-red-600 hover:bg-red-500' : 'bg-green-600 hover:bg-green-500'} w-full py-4 rounded-xl text-xl font-bold">
+                                ${state.happyHour ? '🔴 End Happy Hour' : '🍀 Start Happy Hour'}
+                            </button>
+                        ` : `
+                            <p class="text-sm text-gray-500 italic">Only CAY can control Happy Hour</p>
+                        `}
                     </div>
                 </div>
                 
@@ -2414,6 +2510,45 @@ function playCasinoPrompt(game) {
     }
     const pin = prompt('Enter your PIN to play:');
     if (pin) playCasinoGame(game, betAmount, pin);
+}
+
+function toggleHappyHour() {
+    // Only CAY can toggle Happy Hour
+    if (state.currentPlayer !== 'CAY') {
+        alert('🚫 Access Denied!\n\nOnly CAY can control Happy Hour.');
+        return;
+    }
+    
+    state.happyHour = !state.happyHour;
+    const status = state.happyHour ? 'ACTIVATED' : 'DEACTIVATED';
+    const emoji = state.happyHour ? '🍀' : '😈';
+    
+    // Send notification to all players
+    sendNotificationToAll({
+        title: `${emoji} Casino Happy Hour ${status}!`,
+        message: state.happyHour ? 
+            'All casino games now guarantee wins! Head to the casino for easy money!' : 
+            'Happy Hour has ended. Casino is back to normal odds.',
+        type: state.happyHour ? 'success' : 'warning',
+        timestamp: Date.now()
+    });
+    
+    alert(`${emoji} Happy Hour ${status}!\n\n${state.happyHour ? 'Players will now always win!' : 'Back to normal casino odds.'}\n\n📢 Notification sent to all players!`);
+    render();
+}
+
+function sendNotificationToAll(notification) {
+    const data = initData();
+    if (!data.notifications) data.notifications = [];
+    
+    data.notifications.push(notification);
+    
+    // Keep only last 10 notifications
+    if (data.notifications.length > 10) {
+        data.notifications = data.notifications.slice(-10);
+    }
+    
+    saveData(data);
 }
 
 function buyGift(giftName, giftPrice, recipient, pin) {
