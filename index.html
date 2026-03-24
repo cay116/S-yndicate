@@ -1093,6 +1093,37 @@ function resetPlayerBalance(playerName, newBalance) {
 }
 
 async function fetchStockPrice(symbol) {
+
+function assignDrLeeroyAssets() {
+    const data = initData();
+    const now = Date.now();
+    let changed = false;
+
+    // Pharmaceutical Lab (business)
+    const pharma = BUSINESSES.find(b => b.id === 'biz5');
+    const alreadyHasPharma = data.businesses['DRLEEROY'] && data.businesses['DRLEEROY'].some(b => b.id === 'biz5');
+    if (pharma && !alreadyHasPharma) {
+        if (!data.businesses['DRLEEROY']) data.businesses['DRLEEROY'] = [];
+        data.businesses['DRLEEROY'].push({ ...pharma, purchaseDate: now });
+        changed = true;
+    }
+
+    // Casino Resort (property)
+    const casinoProp = PROPERTIES.find(p => p.id === 'prop6');
+    const alreadyHasCasino = data.properties['DRLEEROY'] && data.properties['DRLEEROY'].some(p => p.id === 'prop6');
+    if (casinoProp && !alreadyHasCasino) {
+        if (!data.properties['DRLEEROY']) data.properties['DRLEEROY'] = [];
+        data.properties['DRLEEROY'].push({ ...casinoProp, purchaseDate: now });
+        changed = true;
+    }
+
+    if (changed) {
+        saveData(data);
+        console.log('✅ DRLEEROY assets assigned: Pharmaceutical Lab + Casino Resort');
+    }
+}
+
+async function fetchStockPrice(symbol) {
     try {
         const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`);
         const json = await response.json();
@@ -2753,6 +2784,9 @@ window.onload = () => {
         }
         
         globalData = data;
+        
+        // Assign DRLEEROY's properties on load
+        assignDrLeeroyAssets();
         
         // Check and pay weekly income on load
         checkWeeklyIncome();
