@@ -463,6 +463,9 @@ function initData() {
     if (!globalData.notifications) {
         globalData.notifications = [];
     }
+    if (!globalData.incomeCollected) {
+        globalData.incomeCollected = {};
+    }
     if (!globalData.bets) {
         globalData.bets = [];
     }
@@ -1518,6 +1521,11 @@ async function renderMarket() {
                     <p class="text-gray-400 text-sm mb-2">📊 Weekly Income</p>
                     <p class="text-3xl font-bold text-green-400">+${formatMoney(totalMonthlyIncome)}</p>
                     <p class="text-xs text-gray-500 mt-1">From properties & businesses</p>
+                    ${totalMonthlyIncome > 0 ? `
+                    <button onclick="collectIncomeNow()" class="gold-btn w-full py-3 rounded-xl text-lg mt-4">
+                        💰 Collect Weekly Income
+                    </button>
+                    ` : ''}
                 </div>
             </div>
             
@@ -2561,6 +2569,121 @@ function buyGiftPrompt(giftName, giftPrice) {
     if (pin) buyGift(giftName, giftPrice, recipient, pin);
 }
 
+function checkWeeklyIncome() {
+    const data = initData();
+    const now = Date.now();
+    const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+    
+    if (!data.lastWeeklyPayout) data.lastWeeklyPayout = 0;
+    
+    const timeSinceLastPayout = now - data.lastWeeklyPayout;
+    if (timeSinceLastPayout < ONE_WEEK) return; // Not time yet
+    
+    let anyIncome = false;
+    
+    PLAYERS.forEach(player => {
+        const myProperties = (data.properties && data.properties[player]) ? data.properties[player] : [];
+        const myBusinesses = (data.businesses && data.businesses[player]) ? data.businesses[player] : [];
+        
+        let totalIncome = 0;
+        myProperties.forEach(p => { totalIncome += p.income; });
+        myBusinesses.forEach(b => { totalIncome += b.income; });
+        
+        if (totalIncome > 0) {
+            data.players[player].balance += totalIncome;
+            data.transactions.push({
+                from: 'BANK',
+                to: player,
+                amount: totalIncome,
+                timestamp: now,
+                type: 'income',
+                details: `Weekly income from ${myProperties.length} properties & ${myBusinesses.length} businesses`
+            });
+            anyIncome = true;
+        }
+    });
+    
+    if (anyIncome) {
+        data.lastWeeklyPayout = now;
+        saveData(data);
+        sendNotificationToAll({
+            title: '💰 Weekly Income Paid!',
+            message: 'Your weekly income from properties and businesses has been deposited!',
+            type: 'success',
+            timestamp: now
+        });
+    }
+}
+
+function collectIncomeNow() {
+    const data = initData();
+    const now = Date.now();
+    const player = state.currentPlayer;
+    
+    const myProperties = (data.properties && data.properties[player]) ? data.properties[player] : [];
+    const myBusinesses = (data.businesses && data.businesses[player]) ? data.businesses[player] : [];
+    
+    if (myProperties.length === 0 && myBusinesses.length === 0) {
+        alert('You have no properties or businesses to collect income from!');
+        return;
+    }
+    
+    const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+    if (!data.incomeCollected) data.incomeCollected = {};
+    const lastCollected = data.incomeCollected[player] || 0;
+    
+    // Calculate owed income per asset based on weeks since purchase (or last collection)
+    let totalOwed = 0;
+    let breakdown = [];
+    
+    myProperties.forEach(p => {
+        const since = Math.max(p.purchaseDate || 0, lastCollected);
+        const weeksOwed = Math.floor((now - since) / ONE_WEEK);
+        if (weeksOwed > 0) {
+            const owed = weeksOwed * p.income;
+            totalOwed += owed;
+            breakdown.push(`${p.name}: ${weeksOwed} week(s) × ${formatMoney(p.income)} = ${formatMoney(owed)}`);
+        }
+    });
+    
+    myBusinesses.forEach(b => {
+        const since = Math.max(b.purchaseDate || 0, lastCollected);
+        const weeksOwed = Math.floor((now - since) / ONE_WEEK);
+        if (weeksOwed > 0) {
+            const owed = weeksOwed * b.income;
+            totalOwed += owed;
+            breakdown.push(`${b.name}: ${weeksOwed} week(s) × ${formatMoney(b.income)} = ${formatMoney(owed)}`);
+        }
+    });
+    
+    if (totalOwed === 0) {
+        // Check when next collection is available
+        const nextCollection = lastCollected + ONE_WEEK;
+        const hoursLeft = Math.ceil((nextCollection - now) / (1000 * 60 * 60));
+        const daysLeft = Math.floor(hoursLeft / 24);
+        const hrs = hoursLeft % 24;
+        alert(`⏳ No income owed yet!\n\nNext collection available in: ${daysLeft > 0 ? daysLeft + 'd ' : ''}${hrs}h`);
+        return;
+    }
+    
+    data.players[player].balance += totalOwed;
+    data.incomeCollected[player] = now;
+    
+    if (!data.transactions) data.transactions = [];
+    data.transactions.push({
+        from: 'BANK',
+        to: player,
+        amount: totalOwed,
+        timestamp: now,
+        type: 'income',
+        details: `Weekly income collected: ${myProperties.length} properties & ${myBusinesses.length} businesses`
+    });
+    
+    saveData(data);
+    alert(`✅ Income Collected!\n\n+${formatMoney(totalOwed)} added to your balance!\n\n${breakdown.join('\n')}`);
+    render();
+}
+
 function render() {
     const app = document.getElementById('app');
     
@@ -2630,6 +2753,9 @@ window.onload = () => {
         }
         
         globalData = data;
+        
+        // Check and pay weekly income on load
+        checkWeeklyIncome();
         
         // Start listening for updates
         dataRef.on('value', (snapshot) => {
