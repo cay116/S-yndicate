@@ -1521,12 +1521,12 @@ async function renderMarket() {
                     <p class="text-gray-400 text-sm mb-2">📊 Weekly Income</p>
                     <p class="text-3xl font-bold text-green-400">+${formatMoney(totalMonthlyIncome)}</p>
                     <p class="text-xs text-gray-500 mt-1">From properties & businesses</p>
-                    ${totalMonthlyIncome > 0 ? `
-                    <button onclick="collectIncomeNow()" class="gold-btn w-full py-3 rounded-xl text-lg mt-4">
-                        💰 Collect Weekly Income
-                    </button>
-                    ` : ''}
                 </div>
+                ${totalMonthlyIncome > 0 ? `
+                <button onclick="collectIncomeNow()" class="gold-btn w-full py-4 rounded-xl text-xl mt-4">
+                    💰 Collect Weekly Income
+                </button>
+                ` : '<p class="text-gray-500 text-center mt-4 text-sm">Buy properties or businesses to earn weekly income</p>'}
             </div>
             
             ${myStocks.length === 0 && myProperties.length === 0 && myBusinesses.length === 0 ? 
