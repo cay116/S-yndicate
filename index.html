@@ -1119,6 +1119,20 @@ function assignDrLeeroyAssets() {
     }
 }
 
+function setRecoveryBalances() {
+    const data = initData();
+    if (data.recoveryBalancesSet) return; // only once
+
+    data.players['DRLEEROY'].balance = 219000;
+    data.players['BROOK'].balance    = 179340;
+    data.players['YONNY'].balance    = 127300;
+    data.players['CAY'].balance      = 52660;
+
+    data.recoveryBalancesSet = true;
+    saveData(data);
+    console.log('✅ Recovery balances set');
+}
+
 function payDrLeeroyBackRent() {
     const data = initData();
     if (data.allPlayersBackRentPaid) return; // only run once
@@ -2851,11 +2865,14 @@ window.onload = () => {
         // Assign DRLEEROY's properties on load
         assignDrLeeroyAssets();
         
+        // Set exact recovery balances
+        setRecoveryBalances();
+        
         // Pay all players 3 weeks of back rent
-        payDrLeeroyBackRent();
+        // payDrLeeroyBackRent(); // disabled - balances already set via setRecoveryBalances
         
         // Pay crash recovery
-        payCrashRecovery();
+        // payCrashRecovery(); // disabled - balances already set via setRecoveryBalances
         
         // Check and pay weekly income on load
         checkWeeklyIncome();
