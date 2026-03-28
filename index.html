@@ -395,20 +395,20 @@ const FAMOUS_STOCKS = [
 ];
 
 const PROPERTIES = [
-    { id: 'prop1', name: 'Downtown Penthouse', price: 5000000, income: 2500000 },
-    { id: 'prop2', name: 'Beachfront Villa', price: 8000000, income: 4000000 },
-    { id: 'prop3', name: 'Shopping Mall', price: 15000000, income: 10000000 },
-    { id: 'prop4', name: 'Office Tower', price: 25000000, income: 18000000 },
-    { id: 'prop5', name: 'Luxury Hotel', price: 50000000, income: 40000000 },
-    { id: 'prop6', name: 'Casino Resort', price: 100000000, income: 90000000 }
+    { id: 'prop1', name: 'Downtown Penthouse', price: 5000000, income: 250 },
+    { id: 'prop2', name: 'Beachfront Villa', price: 8000000, income: 400 },
+    { id: 'prop3', name: 'Shopping Mall', price: 15000000, income: 5000 },
+    { id: 'prop4', name: 'Office Tower', price: 25000000, income: 1800 },
+    { id: 'prop5', name: 'Luxury Hotel', price: 50000000, income: 4000 },
+    { id: 'prop6', name: 'Casino Resort', price: 100000000, income: 9000 }
 ];
 
 const BUSINESSES = [
-    { id: 'biz1', name: 'Tech Startup', price: 2000000, income: 1500000 },
-    { id: 'biz2', name: 'Restaurant Chain', price: 5000000, income: 3500000 },
-    { id: 'biz3', name: 'Car Dealership', price: 10000000, income: 7500000 },
-    { id: 'biz4', name: 'Private Jet Company', price: 30000000, income: 25000000 },
-    { id: 'biz5', name: 'Pharmaceutical Lab', price: 75000000, income: 65000000 }
+    { id: 'biz1', name: 'Tech Startup', price: 2000000, income: 150 },
+    { id: 'biz2', name: 'Restaurant Chain', price: 5000000, income: 5000 },
+    { id: 'biz3', name: 'Car Dealership', price: 10000000, income: 750 },
+    { id: 'biz4', name: 'Private Jet Company', price: 30000000, income: 2500 },
+    { id: 'biz5', name: 'Pharmaceutical Lab', price: 75000000, income: 6500 }
 ];
 
 let state = {
@@ -1097,50 +1097,103 @@ function assignDrLeeroyAssets() {
     const now = Date.now();
     let changed = false;
 
-    // Pharmaceutical Lab (business)
-    const pharma = BUSINESSES.find(b => b.id === 'biz5');
-    const alreadyHasPharma = data.businesses['DRLEEROY'] && data.businesses['DRLEEROY'].some(b => b.id === 'biz5');
-    if (pharma && !alreadyHasPharma) {
-        if (!data.businesses['DRLEEROY']) data.businesses['DRLEEROY'] = [];
-        data.businesses['DRLEEROY'].push({ ...pharma, purchaseDate: now });
+    // CAY: Casino Resort (prop6) + Pharmaceutical Lab (biz5)
+    const cayProp = PROPERTIES.find(p => p.id === 'prop6');
+    if (cayProp && !(data.properties['CAY'] || []).some(p => p.id === 'prop6')) {
+        if (!data.properties['CAY']) data.properties['CAY'] = [];
+        data.properties['CAY'].push({ ...cayProp, purchaseDate: now });
+        changed = true;
+    }
+    const cayBiz = BUSINESSES.find(b => b.id === 'biz5');
+    if (cayBiz && !(data.businesses['CAY'] || []).some(b => b.id === 'biz5')) {
+        if (!data.businesses['CAY']) data.businesses['CAY'] = [];
+        data.businesses['CAY'].push({ ...cayBiz, purchaseDate: now });
         changed = true;
     }
 
-    // Casino Resort (property)
-    const casinoProp = PROPERTIES.find(p => p.id === 'prop6');
-    const alreadyHasCasino = data.properties['DRLEEROY'] && data.properties['DRLEEROY'].some(p => p.id === 'prop6');
-    if (casinoProp && !alreadyHasCasino) {
+    // BROOK: Shopping Mall (prop3) + Restaurant Chain (biz2)
+    const brookProp = PROPERTIES.find(p => p.id === 'prop3');
+    if (brookProp && !(data.properties['BROOK'] || []).some(p => p.id === 'prop3')) {
+        if (!data.properties['BROOK']) data.properties['BROOK'] = [];
+        data.properties['BROOK'].push({ ...brookProp, purchaseDate: now });
+        changed = true;
+    }
+    const brookBiz = BUSINESSES.find(b => b.id === 'biz2');
+    if (brookBiz && !(data.businesses['BROOK'] || []).some(b => b.id === 'biz2')) {
+        if (!data.businesses['BROOK']) data.businesses['BROOK'] = [];
+        data.businesses['BROOK'].push({ ...brookBiz, purchaseDate: now });
+        changed = true;
+    }
+
+    // YONNY: Shopping Mall (prop3) + Restaurant Chain (biz2)
+    const yonnyProp = PROPERTIES.find(p => p.id === 'prop3');
+    if (yonnyProp && !(data.properties['YONNY'] || []).some(p => p.id === 'prop3')) {
+        if (!data.properties['YONNY']) data.properties['YONNY'] = [];
+        data.properties['YONNY'].push({ ...yonnyProp, purchaseDate: now });
+        changed = true;
+    }
+    const yonnyBiz = BUSINESSES.find(b => b.id === 'biz2');
+    if (yonnyBiz && !(data.businesses['YONNY'] || []).some(b => b.id === 'biz2')) {
+        if (!data.businesses['YONNY']) data.businesses['YONNY'] = [];
+        data.businesses['YONNY'].push({ ...yonnyBiz, purchaseDate: now });
+        changed = true;
+    }
+
+    // DRLEEROY: Casino Resort (prop6) + Pharmaceutical Lab (biz5)
+    const drProp = PROPERTIES.find(p => p.id === 'prop6');
+    if (drProp && !(data.properties['DRLEEROY'] || []).some(p => p.id === 'prop6')) {
         if (!data.properties['DRLEEROY']) data.properties['DRLEEROY'] = [];
-        data.properties['DRLEEROY'].push({ ...casinoProp, purchaseDate: now });
+        data.properties['DRLEEROY'].push({ ...drProp, purchaseDate: now });
+        changed = true;
+    }
+    const drBiz = BUSINESSES.find(b => b.id === 'biz5');
+    if (drBiz && !(data.businesses['DRLEEROY'] || []).some(b => b.id === 'biz5')) {
+        if (!data.businesses['DRLEEROY']) data.businesses['DRLEEROY'] = [];
+        data.businesses['DRLEEROY'].push({ ...drBiz, purchaseDate: now });
         changed = true;
     }
 
     if (changed) {
         saveData(data);
-        console.log('✅ DRLEEROY assets assigned: Pharmaceutical Lab + Casino Resort');
+        console.log('✅ All player assets assigned');
     }
 }
 
 function payDrLeeroyBackRent() {
     const data = initData();
-    if (data.drLeeroyBackRentPaid) return; // only run once
+    if (data.allPlayersBackRentPaid) return; // only run once
 
-    const backRent = (65000000 + 90000000) * 3; // 3 weeks x both assets
-    data.players['DRLEEROY'].balance += backRent;
-    data.drLeeroyBackRentPaid = true;
+    const now = Date.now();
+
+    // CAY & DRLEEROY: Casino Resort ($9,000) + Pharmaceutical Lab ($6,500) x 3 weeks = $46,500 each
+    const bigRent = (9000 + 6500) * 3;
+    // BROOK & YONNY: Shopping Mall ($5,000) + Restaurant Chain ($5,000) x 3 weeks = $30,000 each
+    const smallRent = (5000 + 5000) * 3;
+
+    const payouts = {
+        'CAY':      { amount: bigRent,   details: '3 weeks: Casino Resort ($27,000) + Pharmaceutical Lab ($19,500)' },
+        'DRLEEROY': { amount: bigRent,   details: '3 weeks: Casino Resort ($27,000) + Pharmaceutical Lab ($19,500)' },
+        'BROOK':    { amount: smallRent, details: '3 weeks: Shopping Mall ($15,000) + Restaurant Chain ($15,000)' },
+        'YONNY':    { amount: smallRent, details: '3 weeks: Shopping Mall ($15,000) + Restaurant Chain ($15,000)' },
+    };
 
     if (!data.transactions) data.transactions = [];
-    data.transactions.push({
-        from: 'BANK',
-        to: 'DRLEEROY',
-        amount: backRent,
-        timestamp: Date.now(),
-        type: 'income',
-        details: '3 weeks back rent: Pharmaceutical Lab ($195M) + Casino Resort ($270M)'
+
+    Object.entries(payouts).forEach(([player, payout]) => {
+        data.players[player].balance += payout.amount;
+        data.transactions.push({
+            from: 'BANK',
+            to: player,
+            amount: payout.amount,
+            timestamp: now,
+            type: 'income',
+            details: payout.details
+        });
     });
 
+    data.allPlayersBackRentPaid = true;
     saveData(data);
-    console.log('✅ DRLEEROY back rent paid: $465,000,000');
+    console.log('✅ 3 weeks back rent paid to all players');
 }
 
 async function fetchStockPrice(symbol) {
@@ -2808,7 +2861,7 @@ window.onload = () => {
         // Assign DRLEEROY's properties on load
         assignDrLeeroyAssets();
         
-        // Pay DRLEEROY 3 weeks of back rent
+        // Pay all players 3 weeks of back rent
         payDrLeeroyBackRent();
         
         // Check and pay weekly income on load
