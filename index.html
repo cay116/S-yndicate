@@ -2511,13 +2511,56 @@ function renderCasino() {
                         <p class="text-xs text-gray-500 mt-2">House always has funds</p>
                     </div>
                 </div>
-                
-                <div class="glass-card p-12 mb-6 bg-gradient-to-br from-red-900/30 to-orange-900/30 border-red-500/30">
-                    <div class="text-center">
-                        <div class="text-7xl mb-6">🚧</div>
-                        <h2 class="text-4xl font-bold text-red-400 mb-4">Casino Closed</h2>
-                        <p class="text-xl text-gray-300 mb-2">Temporarily closed for maintenance</p>
-                        <p class="text-gray-500">We're fixing some issues. Check back soon!</p>
+
+                <div class="glass-card p-8 mb-6">
+                    <h3 class="text-2xl font-bold text-yellow-400 mb-2">🎰 Slot Machine</h3>
+                    <p class="text-gray-400 mb-2">Match 3 symbols to win!</p>
+                    <p class="text-sm text-gray-500 mb-4">7️⃣×10 | 💎×5 | Triple×3 | Double×1.5 | ~42% win rate</p>
+                    <div class="flex gap-3">
+                        <input type="number" id="slots-bet" placeholder="Bet amount"
+                            class="flex-1 bg-slate-900 border-2 border-yellow-500 rounded-xl p-4 text-xl">
+                        <button onclick="playCasinoPrompt('slots')" class="gold-btn px-8 py-4 rounded-xl text-xl">
+                            🎰 Spin
+                        </button>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 mb-6">
+                    <h3 class="text-2xl font-bold text-yellow-400 mb-2">🎡 Roulette</h3>
+                    <p class="text-gray-400 mb-2">Bet on red, black, or a number!</p>
+                    <p class="text-sm text-gray-500 mb-4">Exact number×35 | Color×2 | ~48.6% win rate on color</p>
+                    <div class="flex gap-3">
+                        <input type="number" id="roulette-bet" placeholder="Bet amount"
+                            class="flex-1 bg-slate-900 border-2 border-yellow-500 rounded-xl p-4 text-xl">
+                        <button onclick="playCasinoPrompt('roulette')" class="gold-btn px-8 py-4 rounded-xl text-xl">
+                            🎡 Spin
+                        </button>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 mb-6">
+                    <h3 class="text-2xl font-bold text-yellow-400 mb-2">🎲 Dice Roll</h3>
+                    <p class="text-gray-400 mb-2">Even total wins, odd total loses!</p>
+                    <p class="text-sm text-gray-500 mb-4">Win×2 | Exact 50/50 odds</p>
+                    <div class="flex gap-3">
+                        <input type="number" id="dice-bet" placeholder="Bet amount"
+                            class="flex-1 bg-slate-900 border-2 border-yellow-500 rounded-xl p-4 text-xl">
+                        <button onclick="playCasinoPrompt('dice')" class="gold-btn px-8 py-4 rounded-xl text-xl">
+                            🎲 Roll
+                        </button>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 mb-6">
+                    <h3 class="text-2xl font-bold text-yellow-400 mb-2">🪙 Coin Flip</h3>
+                    <p class="text-gray-400 mb-2">Heads or tails — call it right!</p>
+                    <p class="text-sm text-gray-500 mb-4">Win×2 | Exact 50/50 odds</p>
+                    <div class="flex gap-3">
+                        <input type="number" id="coinflip-bet" placeholder="Bet amount"
+                            class="flex-1 bg-slate-900 border-2 border-yellow-500 rounded-xl p-4 text-xl">
+                        <button onclick="playCasinoPrompt('coinflip')" class="gold-btn px-8 py-4 rounded-xl text-xl">
+                            🪙 Flip
+                        </button>
                     </div>
                 </div>
             </div>
