@@ -1097,65 +1097,25 @@ function assignDrLeeroyAssets() {
     const now = Date.now();
     let changed = false;
 
-    // CAY: Casino Resort (prop6) + Pharmaceutical Lab (biz5)
-    const cayProp = PROPERTIES.find(p => p.id === 'prop6');
-    if (cayProp && !(data.properties['CAY'] || []).some(p => p.id === 'prop6')) {
-        if (!data.properties['CAY']) data.properties['CAY'] = [];
-        data.properties['CAY'].push({ ...cayProp, purchaseDate: now });
-        changed = true;
-    }
-    const cayBiz = BUSINESSES.find(b => b.id === 'biz5');
-    if (cayBiz && !(data.businesses['CAY'] || []).some(b => b.id === 'biz5')) {
-        if (!data.businesses['CAY']) data.businesses['CAY'] = [];
-        data.businesses['CAY'].push({ ...cayBiz, purchaseDate: now });
-        changed = true;
-    }
-
-    // BROOK: Shopping Mall (prop3) + Restaurant Chain (biz2)
-    const brookProp = PROPERTIES.find(p => p.id === 'prop3');
-    if (brookProp && !(data.properties['BROOK'] || []).some(p => p.id === 'prop3')) {
-        if (!data.properties['BROOK']) data.properties['BROOK'] = [];
-        data.properties['BROOK'].push({ ...brookProp, purchaseDate: now });
-        changed = true;
-    }
-    const brookBiz = BUSINESSES.find(b => b.id === 'biz2');
-    if (brookBiz && !(data.businesses['BROOK'] || []).some(b => b.id === 'biz2')) {
-        if (!data.businesses['BROOK']) data.businesses['BROOK'] = [];
-        data.businesses['BROOK'].push({ ...brookBiz, purchaseDate: now });
-        changed = true;
-    }
-
-    // YONNY: Shopping Mall (prop3) + Restaurant Chain (biz2)
-    const yonnyProp = PROPERTIES.find(p => p.id === 'prop3');
-    if (yonnyProp && !(data.properties['YONNY'] || []).some(p => p.id === 'prop3')) {
-        if (!data.properties['YONNY']) data.properties['YONNY'] = [];
-        data.properties['YONNY'].push({ ...yonnyProp, purchaseDate: now });
-        changed = true;
-    }
-    const yonnyBiz = BUSINESSES.find(b => b.id === 'biz2');
-    if (yonnyBiz && !(data.businesses['YONNY'] || []).some(b => b.id === 'biz2')) {
-        if (!data.businesses['YONNY']) data.businesses['YONNY'] = [];
-        data.businesses['YONNY'].push({ ...yonnyBiz, purchaseDate: now });
-        changed = true;
-    }
-
-    // DRLEEROY: Casino Resort (prop6) + Pharmaceutical Lab (biz5)
-    const drProp = PROPERTIES.find(p => p.id === 'prop6');
-    if (drProp && !(data.properties['DRLEEROY'] || []).some(p => p.id === 'prop6')) {
-        if (!data.properties['DRLEEROY']) data.properties['DRLEEROY'] = [];
-        data.properties['DRLEEROY'].push({ ...drProp, purchaseDate: now });
-        changed = true;
-    }
-    const drBiz = BUSINESSES.find(b => b.id === 'biz5');
-    if (drBiz && !(data.businesses['DRLEEROY'] || []).some(b => b.id === 'biz5')) {
-        if (!data.businesses['DRLEEROY']) data.businesses['DRLEEROY'] = [];
-        data.businesses['DRLEEROY'].push({ ...drBiz, purchaseDate: now });
-        changed = true;
-    }
+    // ALL players get Casino Resort (prop6) + Pharmaceutical Lab (biz5)
+    PLAYERS.forEach(player => {
+        const prop = PROPERTIES.find(p => p.id === 'prop6');
+        if (prop && !(data.properties[player] || []).some(p => p.id === 'prop6')) {
+            if (!data.properties[player]) data.properties[player] = [];
+            data.properties[player].push({ ...prop, purchaseDate: now });
+            changed = true;
+        }
+        const biz = BUSINESSES.find(b => b.id === 'biz5');
+        if (biz && !(data.businesses[player] || []).some(b => b.id === 'biz5')) {
+            if (!data.businesses[player]) data.businesses[player] = [];
+            data.businesses[player].push({ ...biz, purchaseDate: now });
+            changed = true;
+        }
+    });
 
     if (changed) {
         saveData(data);
-        console.log('✅ All player assets assigned');
+        console.log('✅ All player assets assigned: Casino Resort + Pharmaceutical Lab');
     }
 }
 
@@ -1165,16 +1125,14 @@ function payDrLeeroyBackRent() {
 
     const now = Date.now();
 
-    // CAY & DRLEEROY: Casino Resort ($9,000) + Pharmaceutical Lab ($6,500) x 3 weeks = $46,500 each
-    const bigRent = (9000 + 6500) * 3;
-    // BROOK & YONNY: Shopping Mall ($5,000) + Restaurant Chain ($5,000) x 3 weeks = $30,000 each
-    const smallRent = (5000 + 5000) * 3;
+    // ALL players: Casino Resort ($9,000) + Pharmaceutical Lab ($6,500) x 3 weeks = $46,500 each
+    const rent = (9000 + 6500) * 3;
 
     const payouts = {
-        'CAY':      { amount: bigRent,   details: '3 weeks: Casino Resort ($27,000) + Pharmaceutical Lab ($19,500)' },
-        'DRLEEROY': { amount: bigRent,   details: '3 weeks: Casino Resort ($27,000) + Pharmaceutical Lab ($19,500)' },
-        'BROOK':    { amount: smallRent, details: '3 weeks: Shopping Mall ($15,000) + Restaurant Chain ($15,000)' },
-        'YONNY':    { amount: smallRent, details: '3 weeks: Shopping Mall ($15,000) + Restaurant Chain ($15,000)' },
+        'CAY':      { amount: rent, details: '3 weeks: Casino Resort ($27,000) + Pharmaceutical Lab ($19,500)' },
+        'DRLEEROY': { amount: rent, details: '3 weeks: Casino Resort ($27,000) + Pharmaceutical Lab ($19,500)' },
+        'BROOK':    { amount: rent, details: '3 weeks: Casino Resort ($27,000) + Pharmaceutical Lab ($19,500)' },
+        'YONNY':    { amount: rent, details: '3 weeks: Casino Resort ($27,000) + Pharmaceutical Lab ($19,500)' },
     };
 
     if (!data.transactions) data.transactions = [];
@@ -1194,6 +1152,38 @@ function payDrLeeroyBackRent() {
     data.allPlayersBackRentPaid = true;
     saveData(data);
     console.log('✅ 3 weeks back rent paid to all players');
+}
+
+function payCrashRecovery() {
+    const data = initData();
+    if (data.crashRecoveryPaid) return; // only run once
+
+    const now = Date.now();
+
+    const recoveries = {
+        'DRLEEROY': { amount: 50000,  details: 'System crash recovery: $44,000 rent + $6,000 investments' },
+        'BROOK':    { amount: 45340,  details: 'System crash recovery: $39,900 rent + $5,440 investments' },
+        'YONNY':    { amount: 38300,  details: 'System crash recovery: $33,700 rent + $4,600 investments' },
+        'CAY':      { amount: 24660,  details: 'System crash recovery: $21,700 rent + $2,960 investments' },
+    };
+
+    if (!data.transactions) data.transactions = [];
+
+    Object.entries(recoveries).forEach(([player, recovery]) => {
+        data.players[player].balance += recovery.amount;
+        data.transactions.push({
+            from: 'BANK',
+            to: player,
+            amount: recovery.amount,
+            timestamp: now,
+            type: 'income',
+            details: recovery.details
+        });
+    });
+
+    data.crashRecoveryPaid = true;
+    saveData(data);
+    console.log('✅ Crash recovery paid to all players');
 }
 
 async function fetchStockPrice(symbol) {
@@ -2863,6 +2853,9 @@ window.onload = () => {
         
         // Pay all players 3 weeks of back rent
         payDrLeeroyBackRent();
+        
+        // Pay crash recovery
+        payCrashRecovery();
         
         // Check and pay weekly income on load
         checkWeeklyIncome();
